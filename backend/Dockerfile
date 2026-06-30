@@ -2,14 +2,17 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# WeasyPrint system dependencies (Debian trixie compatible)
+# Build tools + WeasyPrint system dependencies
 RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
     libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

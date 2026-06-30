@@ -2,7 +2,6 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Build tools + WeasyPrint system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
@@ -16,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# cache-bust: 2026-07-01
+# bust: 2026-07-01-v3
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .

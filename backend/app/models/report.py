@@ -19,15 +19,15 @@ class Report(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "reports"
 
     vehicle_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True)
-    vin: Mapped[str | None] = mapped_column(String(17), index=True)
-    auto_ria_url: Mapped[str | None] = mapped_column(String(500))
+    vin: Mapped[str | None] = mapped_column(String(17), index=True, nullable=True)
+    auto_ria_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[ReportStatus] = mapped_column(Enum(ReportStatus), default=ReportStatus.PENDING, index=True)
     risk_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    pdf_url: Mapped[str | None] = mapped_column(String(500))
-    ai_summary: Mapped[str | None] = mapped_column(Text)
+    pdf_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_vin_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     raw_auction_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    error_message: Mapped[str | None] = mapped_column(Text)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     vehicle: Mapped["Vehicle | None"] = relationship("Vehicle", back_populates="reports")
     photo_analyses: Mapped[list["PhotoAnalysis"]] = relationship("PhotoAnalysis", back_populates="report", lazy="select")

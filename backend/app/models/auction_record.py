@@ -1,7 +1,8 @@
 import uuid
-from sqlalchemy import String, Integer, Float, ForeignKey, Date, Text
+from sqlalchemy import String, Integer, Float, ForeignKey, Date, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Any
 from app.core.database import Base
 from app.models.base import UUIDMixin, TimestampMixin
 
@@ -18,6 +19,6 @@ class AuctionRecord(Base, UUIDMixin, TimestampMixin):
     damage_description: Mapped[str | None] = mapped_column(Text)
     primary_damage: Mapped[str | None] = mapped_column(String(100))
     secondary_damage: Mapped[str | None] = mapped_column(String(100))
-    photos: Mapped[list | None] = mapped_column()
+    photos: Mapped[list[Any] | None] = mapped_column(JSON, nullable=True)
 
     report: Mapped["Report"] = relationship("Report", back_populates="auction_records")

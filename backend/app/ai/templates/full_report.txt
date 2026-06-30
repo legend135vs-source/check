@@ -1,0 +1,16 @@
+Analyze the following vehicle and provide a comprehensive inspection report.
+
+Vehicle: {year} {make} {model}
+VIN: {vin}
+Auction records found: {auction_count}
+Damage incidents detected: {damage_count}
+Auction damage summary: {auction_summary}
+
+Provide:
+1. Overall vehicle assessment
+2. Risk analysis and risk_score: X/10 (where 10 = highest risk)
+3. Key concerns for potential buyers
+4. Recommended inspections
+5. Buying recommendation
+
+Format your response clearly with sections.

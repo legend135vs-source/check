@@ -1,0 +1,4 @@
+Analyze the following VIN decode data and identify any notable characteristics,
+known issues for this make/model/year, and what buyers should be aware of.
+
+VIN Data: {vin_data}

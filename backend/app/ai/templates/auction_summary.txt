@@ -1,0 +1,4 @@
+Summarize the following auction history records for a vehicle buyer.
+Focus on damage severity, repair patterns, and price trends.
+
+Records: {records}

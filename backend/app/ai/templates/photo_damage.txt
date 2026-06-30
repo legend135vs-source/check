@@ -1,0 +1,3 @@
+Analyze this vehicle photo for any visible damage, rust, paint issues,
+structural problems, or signs of previous repairs.
+Return a detailed assessment in JSON format.

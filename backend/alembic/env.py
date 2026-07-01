@@ -1,13 +1,14 @@
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 from alembic import context
 from app.core.config import settings
 from app.models.base import Base
 import app.models  # noqa: F401
 
+MIGRATION_LOCK_ID = 987654321  # arbitrary unique int for advisory lock
+
 
 def _make_sync_url(url: str) -> str:
-    """Convert any postgres URL variant to psycopg2-compatible sync URL."""
     url = url.replace("postgresql+asyncpg://", "postgresql://")
     url = url.replace("postgres+asyncpg://", "postgresql://")
     if url.startswith("postgres://"):
@@ -45,12 +46,19 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-        )
-        with context.begin_transaction():
-            context.run_migrations()
+        # Acquire PostgreSQL advisory lock so only one replica migrates at a time.
+        # pg_advisory_lock blocks until the lock is available, then auto-releases
+        # when the connection closes.
+        connection.execute(text(f"SELECT pg_advisory_lock({MIGRATION_LOCK_ID})"))
+        try:
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata,
+            )
+            with context.begin_transaction():
+                context.run_migrations()
+        finally:
+            connection.execute(text(f"SELECT pg_advisory_unlock({MIGRATION_LOCK_ID})"))
 
 
 if context.is_offline_mode():

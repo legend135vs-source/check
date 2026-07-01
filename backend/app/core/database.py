@@ -1,28 +1,34 @@
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
-
+# Convert postgres:// -> postgresql+asyncpg://
 def _make_async_url(url: str) -> str:
-    """Convert postgresql:// or postgres:// to postgresql+asyncpg:// for async driver."""
-    for prefix in ("postgresql://", "postgres://"):
-        if url.startswith(prefix):
-            return "postgresql+asyncpg://" + url[len(prefix):]
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
     return url
 
 
-async_url = _make_async_url(settings.DATABASE_URL)
-
 engine = create_async_engine(
-    async_url,
+    _make_async_url(settings.DATABASE_URL),
     echo=settings.ENVIRONMENT == "development",
     pool_size=10,
     max_overflow=20,
-    pool_pre_ping=True,
 )
 
-AsyncSessionFactory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
 class Base(DeclarativeBase):
     pass
+
+
+async def get_db() -> AsyncSession:  # type: ignore
+    async with AsyncSessionLocal() as session:
+        yield session

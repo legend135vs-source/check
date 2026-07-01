@@ -7,8 +7,8 @@ Create Date: 2026-07-01
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine.reflection import Inspector
 
 revision: str = "0001"
 down_revision: Union[str, None] = None
@@ -17,14 +17,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def _table_exists(conn, name: str) -> bool:
-    inspector = Inspector.from_engine(conn)
-    return name in inspector.get_table_names()
+    return inspect(conn).has_table(name)
 
 
 def upgrade() -> None:
     conn = op.get_bind()
 
-    # Create enum type if not exists
     conn.execute(sa.text(
         "DO $$ BEGIN "
         "CREATE TYPE reportstatus AS ENUM ('pending','processing','done','failed'); "

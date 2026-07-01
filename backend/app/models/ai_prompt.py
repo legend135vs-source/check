@@ -1,15 +1,13 @@
-from sqlalchemy import String, Text, Boolean
+from sqlalchemy import String, Text, Integer, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
-from app.core.database import Base
-from app.models.base import UUIDMixin, TimestampMixin
+from app.models.base import Base, UUIDMixin, TimestampMixin
 
 
-class AIPrompt(Base, UUIDMixin, TimestampMixin):
+class AiPrompt(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "ai_prompts"
 
-    key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
-    description: Mapped[str | None] = mapped_column(String(300))
+    key: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
     template: Mapped[str] = mapped_column(Text, nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    model_override: Mapped[str | None] = mapped_column(String(50))
-    max_tokens_override: Mapped[int | None]
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")

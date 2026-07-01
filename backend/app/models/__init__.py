@@ -1,15 +1,31 @@
-# Import all models so SQLAlchemy registers them before Alembic scans metadata.
-# Order matters: base tables first, then tables with FK references.
-from app.models import brand       # noqa: F401
-from app.models import model       # noqa: F401
-from app.models import engine      # noqa: F401
-from app.models import vehicle     # noqa: F401
-from app.models import report      # noqa: F401
-from app.models import auction_record  # noqa: F401
-from app.models import photo_analysis  # noqa: F401
-from app.models import ai_prompt   # noqa: F401
-from app.models import pricing     # noqa: F401
-from app.models import maintenance # noqa: F401
-from app.models import problem     # noqa: F401
-from app.models import recall      # noqa: F401
-from app.models import request_log # noqa: F401
+from app.models.base import Base
+from app.models.brand import Brand
+from app.models.vehicle_model import VehicleModel
+from app.models.engine import Engine
+from app.models.vehicle import Vehicle
+from app.models.report import Report
+from app.models.auction_record import AuctionRecord
+from app.models.photo_analysis import PhotoAnalysis
+from app.models.ai_prompt import AiPrompt
+from app.models.pricing import Pricing
+from app.models.maintenance import Maintenance
+from app.models.problem import Problem
+from app.models.recall import Recall
+from app.models.request_log import RequestLog
+
+__all__ = [
+    "Base",
+    "Brand",
+    "VehicleModel",
+    "Engine",
+    "Vehicle",
+    "Report",
+    "AuctionRecord",
+    "PhotoAnalysis",
+    "AiPrompt",
+    "Pricing",
+    "Maintenance",
+    "Problem",
+    "Recall",
+    "RequestLog",
+]

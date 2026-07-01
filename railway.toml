@@ -4,33 +4,3 @@ builder = "nixpacks"
 [deploy]
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
-
-[[services]]
-name = "backend"
-source = "backend"
-healthcheckPath = "/api/v1/health"
-healthcheckTimeout = 30
-
-[services.build]
-builder = "nixpacks"
-buildCommand = "pip install -r requirements.txt"
-
-[services.deploy]
-startCommand = "echo '=== STARTING MIGRATION ===' && alembic upgrade head 2>&1 && echo '=== MIGRATION OK ===' && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
-
-[[services]]
-name = "frontend"
-source = "frontend"
-healthcheckPath = "/"
-healthcheckTimeout = 30
-
-[services.build]
-builder = "nixpacks"
-buildCommand = "npm ci && npm run build"
-
-[services.deploy]
-startCommand = "node .next/standalone/server.js"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3

@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# bust: 2026-07-01-v3
+# bust: 2026-07-01-v4
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .

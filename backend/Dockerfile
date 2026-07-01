@@ -19,7 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# cache-bust: 2026-07-01-v5
+ARG CACHEBUST=1
+
 EXPOSE 8000
 
-# CMD is overridden by railway.toml startCommand
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "echo '=== RUNNING ALEMBIC ===' && alembic -c alembic.ini upgrade head; EXIT=$?; echo \"=== ALEMBIC EXIT CODE: $EXIT ==="; if [ $EXIT -ne 0 ]; then echo '=== ALEMBIC FAILED - check errors above ===' && exit 1; fi && echo '=== STARTING UVICORN ===' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

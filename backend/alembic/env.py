@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from app.core.config import settings
 from app.models.base import Base
-import app.models  # noqa: F401 – registers all models
+import app.models  # noqa: F401 – registers all models with SQLAlchemy
 
 
 def _make_async_url(url: str) -> str:
@@ -19,8 +19,13 @@ def _make_async_url(url: str) -> str:
 config = context.config
 config.set_main_option("sqlalchemy.url", _make_async_url(settings.DATABASE_URL))
 
+# Only call fileConfig if the ini file has the required logging sections
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    import configparser
+    _cp = configparser.ConfigParser()
+    _cp.read(config.config_file_name)
+    if _cp.has_section("formatters"):
+        fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 

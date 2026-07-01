@@ -1,11 +1,19 @@
+import sys
+import traceback
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool, text
 from alembic import context
-from app.core.config import settings
-from app.models.base import Base
-import app.models  # noqa: F401
 
-MIGRATION_LOCK_ID = 987654321  # arbitrary unique int for advisory lock
+try:
+    from app.core.config import settings
+    from app.models.base import Base
+    import app.models  # noqa: F401
+except Exception as e:
+    print(f"[ALEMBIC IMPORT ERROR] {e}", flush=True)
+    traceback.print_exc()
+    sys.exit(1)
+
+MIGRATION_LOCK_ID = 987654321
 
 
 def _make_sync_url(url: str) -> str:
@@ -17,7 +25,13 @@ def _make_sync_url(url: str) -> str:
 
 
 config = context.config
-config.set_main_option("sqlalchemy.url", _make_sync_url(settings.DATABASE_URL))
+
+try:
+    config.set_main_option("sqlalchemy.url", _make_sync_url(settings.DATABASE_URL))
+except Exception as e:
+    print(f"[ALEMBIC CONFIG ERROR] {e}", flush=True)
+    traceback.print_exc()
+    sys.exit(1)
 
 if config.config_file_name is not None:
     try:
@@ -45,23 +59,30 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    with connectable.connect() as connection:
-        # Acquire PostgreSQL advisory lock so only one replica migrates at a time.
-        # pg_advisory_lock blocks until the lock is available, then auto-releases
-        # when the connection closes.
-        connection.execute(text(f"SELECT pg_advisory_lock({MIGRATION_LOCK_ID})"))
-        try:
-            context.configure(
-                connection=connection,
-                target_metadata=target_metadata,
-            )
-            with context.begin_transaction():
-                context.run_migrations()
-        finally:
-            connection.execute(text(f"SELECT pg_advisory_unlock({MIGRATION_LOCK_ID})"))
+    try:
+        with connectable.connect() as connection:
+            connection.execute(text(f"SELECT pg_advisory_lock({MIGRATION_LOCK_ID})"))
+            try:
+                context.configure(
+                    connection=connection,
+                    target_metadata=target_metadata,
+                )
+                with context.begin_transaction():
+                    context.run_migrations()
+            finally:
+                connection.execute(text(f"SELECT pg_advisory_unlock({MIGRATION_LOCK_ID})"))
+    except Exception as e:
+        print(f"[ALEMBIC MIGRATION ERROR] {e}", flush=True)
+        traceback.print_exc()
+        sys.exit(1)
 
 
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+try:
+    if context.is_offline_mode():
+        run_migrations_offline()
+    else:
+        run_migrations_online()
+except Exception as e:
+    print(f"[ALEMBIC RUN ERROR] {e}", flush=True)
+    traceback.print_exc()
+    sys.exit(1)

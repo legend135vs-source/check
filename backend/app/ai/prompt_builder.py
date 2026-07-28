@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.ai_prompt import AIPrompt
+from app.models.ai_prompt import AiPrompt
 from app.domain.entities.report import ReportEntity
 import os
 
@@ -16,7 +16,7 @@ class PromptBuilder:
 
     async def _load_template(self, key: str) -> str:
         result = await self.db.execute(
-            select(AIPrompt).where(AIPrompt.key == key, AIPrompt.is_active == True)
+            select(AiPrompt).where(AiPrompt.key == key, AiPrompt.is_active == True)
         )
         prompt = result.scalar_one_or_none()
         if prompt:

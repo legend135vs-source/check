@@ -1,11 +1,13 @@
 import logging
-from app.core.config import settings
+import sys
 
 
 def setup_logging() -> None:
-    level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     logging.basicConfig(
-        level=level,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+        stream=sys.stdout,
     )
-    logging.getLogger("uvicorn.access").setLevel(level)
+
+
+logger = logging.getLogger("app")

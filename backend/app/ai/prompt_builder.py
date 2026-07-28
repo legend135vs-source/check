@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.aiprompt import AiPrompt
+from app.models.ai_prompt import AiPrompt
 from app.domain.entities.report import ReportEntity
 import os
 

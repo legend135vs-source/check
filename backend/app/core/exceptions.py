@@ -17,3 +17,6 @@ class ServiceError(HTTPException):
 class StorageError(Exception):
     """Помилка роботи зі сховищем файлів."""
     pass
+class ReportNotFoundError(Exception):
+    """Звіт не знайдено."""
+    pass

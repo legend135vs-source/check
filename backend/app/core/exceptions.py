@@ -20,3 +20,6 @@ class StorageError(Exception):
 class ReportNotFoundError(Exception):
     """Звіт не знайдено."""
     pass
+class ExternalAPIError(Exception):
+    """Помилка під час звернення до зовнішнього API."""
+    pass

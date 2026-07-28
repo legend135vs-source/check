@@ -14,3 +14,6 @@ class ValidationError(HTTPException):
 class ServiceError(HTTPException):
     def __init__(self, detail: str = "Service error"):
         super().__init__(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
+class StorageError(Exception):
+    """Помилка роботи зі сховищем файлів."""
+    pass

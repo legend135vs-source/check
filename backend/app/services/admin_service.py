@@ -1,8 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.report import Report, ReportStatus
-from app.models.brand import Brand
-from app.models.ai_prompt import AIPrompt
+
 
 
 class AdminService:

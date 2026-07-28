@@ -4,7 +4,7 @@ from app.core.dependencies import get_db
 from app.schemas.admin import BrandCreate, BrandResponse, PromptCreate, PromptResponse, StatsResponse
 from app.services.admin_service import AdminService
 from app.models.brand import Brand
-from app.models.ai_prompt import AIPrompt
+from app.models.ai_prompt import AiPrompt
 
 router = APIRouter()
 
@@ -33,7 +33,7 @@ async def list_brands(db: AsyncSession = Depends(get_db)):
 
 @router.post("/prompts", response_model=PromptResponse)
 async def create_prompt(body: PromptCreate, db: AsyncSession = Depends(get_db)):
-    prompt = AIPrompt(**body.model_dump())
+    prompt = AiPrompt(**body.model_dump())
     db.add(prompt)
     await db.flush()
     await db.refresh(prompt)

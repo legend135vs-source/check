@@ -10,12 +10,12 @@ class NHTSAVINDecoder(IVINDecoder):
     TIMEOUT = httpx.Timeout(connect=5.0, read=12.0, write=5.0, pool=5.0)
 
     async def decode(self, vin: str) -> VINData:
-        normalized_vin = vin.strip().upper().replace(" ", "").replace("-", "")
+        normalized_vin = self._normalize_vin(vin)
 
         if len(normalized_vin) != 17:
             raise ExternalAPIError(
                 service="NHTSA VIN Decoder",
-                detail="VIN повинен містити 17 символів.",
+                detail="VIN повинен містити рівно 17 символів.",
             )
 
         try:
@@ -40,7 +40,7 @@ class NHTSAVINDecoder(IVINDecoder):
                 detail="Сервіс VIN повернув некоректну відповідь.",
             ) from error
 
-        result = self._get_first_result(payload)
+        result = self._get_result(payload)
         error_code = self._text(result.get("ErrorCode"))
         error_text = self._text(result.get("ErrorText"))
 
@@ -61,11 +61,16 @@ class NHTSAVINDecoder(IVINDecoder):
             transmission=self._text(result.get("TransmissionStyle")),
             drive_type=self._text(result.get("DriveType")),
             country_of_manufacture=self._manufacturer_label(result),
+            decode_status="partial" if error_code == "1" else "success",
             extra=self._extra(result, error_code, error_text),
         )
 
     @staticmethod
-    def _get_first_result(payload: dict) -> dict:
+    def _normalize_vin(vin: str) -> str:
+        return vin.strip().upper().replace(" ", "").replace("-", "")
+
+    @staticmethod
+    def _get_result(payload: dict) -> dict:
         results = payload.get("Results")
 
         if not isinstance(results, list) or not results:
@@ -102,9 +107,9 @@ class NHTSAVINDecoder(IVINDecoder):
     def _engine_label(self, result: dict) -> str | None:
         displacement = self._text(result.get("DisplacementL"))
         cylinders = self._text(result.get("EngineCylinders"))
-        model = self._text(result.get("EngineModel"))
+        engine_model = self._text(result.get("EngineModel"))
 
-        parts = []
+        parts: list[str] = []
 
         if displacement:
             parts.append(f"{displacement} л")
@@ -112,8 +117,8 @@ class NHTSAVINDecoder(IVINDecoder):
         if cylinders:
             parts.append(f"{cylinders} цил.")
 
-        if model:
-            parts.append(model)
+        if engine_model:
+            parts.append(engine_model)
 
         return ", ".join(parts) if parts else None
 
@@ -132,7 +137,7 @@ class NHTSAVINDecoder(IVINDecoder):
         error_code: str | None,
         error_text: str | None,
     ) -> dict:
-        keys = (
+        fields = (
             "VehicleType",
             "Trim",
             "Series",
@@ -153,9 +158,9 @@ class NHTSAVINDecoder(IVINDecoder):
         )
 
         extra = {
-            key: self._text(result.get(key))
-            for key in keys
-            if self._text(result.get(key)) is not None
+            field: self._text(result.get(field))
+            for field in fields
+            if self._text(result.get(field)) is not None
         }
 
         if error_code is not None:

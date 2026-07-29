@@ -14,4 +14,5 @@ class VINData:
     transmission: Optional[str] = None
     drive_type: Optional[str] = None
     country_of_manufacture: Optional[str] = None
+    decode_status: str = "success"
     extra: dict = field(default_factory=dict)

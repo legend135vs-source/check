@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import admin, health, photo, report, vehicle, vin
+from app.api.v1 import admin, photo, report, vehicle, vin
 from app.api.v1 import analysis
 
 api_v1_router = APIRouter()

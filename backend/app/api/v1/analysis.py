@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
-from app.schemas.analysis import AnalysisRequest, AnalysisResponse, AnalysisReport
+from app.schemas.analysis import AnalysisRequest, AnalysisResponse
+from app.services.ai.report_generator import AIReportGenerator
 from app.services.autoria.service import AutoRiaService
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
@@ -8,22 +9,11 @@ router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
 @router.post("", response_model=AnalysisResponse)
 async def analyze_autoria_listing(payload: AnalysisRequest) -> AnalysisResponse:
-    service = AutoRiaService()
-    advertisement = await service.get_advertisement_by_url(str(payload.url))
+    autoria_service = AutoRiaService()
+    advertisement = await autoria_service.get_advertisement_by_url(str(payload.url))
 
-    report = AnalysisReport(
-        overall_assessment="Чернетка: AI-звіт буде підключений наступним кроком.",
-        pros=[],
-        cons=[],
-        risks=[],
-        common_issues=[],
-        photo_analysis=[],
-        description_analysis=[],
-        expected_costs=[],
-        questions_to_seller=[],
-        service_checklist=[],
-        final_conclusion=None,
-    )
+    ai_service = AIReportGenerator()
+    report = await ai_service.generate(advertisement)
 
     return AnalysisResponse(
         auto_id=advertisement.auto_id,

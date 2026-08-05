@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.core.exceptions import ExternalAPIError, ValidationError
 from app.schemas.analysis import AnalysisApiResponse, AnalysisRequest
 from app.services.ai.report_generator import AIReportGenerator
 from app.services.autoria.service import AutoRiaService
@@ -38,8 +39,21 @@ async def analyze_autoria_listing(payload: AnalysisRequest) -> AnalysisApiRespon
     autoria_service = AutoRiaService()
     advertisement = await autoria_service.get_advertisement_by_url(str(payload.url))
 
-    ai_service = AIReportGenerator()
-    report = await ai_service.generate(advertisement)
+    try:
+        ai_service = AIReportGenerator()
+        report = await ai_service.generate(advertisement)
+    except ValidationError as exc:
+        # OPENAI_API_KEY is not configured or similar validation issue
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc.detail or exc),
+        )
+    except ExternalAPIError as exc:
+        # Upstream AI provider failure
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc.detail or exc),
+        )
 
     response = _to_api_response(advertisement, report)
     _ANALYSIS_STORE[response.analysis_id] = response

@@ -1,4 +1,6 @@
-from pydantic import BaseModel, AnyHttpUrl
+from typing import Literal
+
+from pydantic import AnyHttpUrl, BaseModel
 
 
 class AnalysisRequest(BaseModel):
@@ -38,3 +40,23 @@ class AnalysisResponse(BaseModel):
     auto_id: int
     advertisement: AdvertisementData
     report: AnalysisReport
+
+
+class AnalysisApiResponse(BaseModel):
+    stage: Literal['free', 'paywall', 'pro']
+    analysis_id: str
+    brand: str | None = None
+    model: str | None = None
+    year: int | None = None
+    mileage: int | None = None
+    price_usd: int | None = None
+    summary: str | None = None
+    risk_preview: str | None = None
+    paywall_reason: str | None = None
+    price_uah: int | None = None
+    payment_url: str | None = None
+    recommendation: str | None = None
+    pros: list[str] = []
+    cons: list[str] = []
+    risks: list[str] = []
+    detailed_analysis: str | None = None

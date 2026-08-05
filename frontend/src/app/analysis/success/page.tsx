@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getAnalysis } from '@/lib/api/analysis.api';
 import type { AnalysisResponse } from '@/types/analysis.types';
@@ -8,7 +8,7 @@ import { ProResult } from '@/components/mvp/ProResult';
 import { Paywall } from '@/components/mvp/Paywall';
 import { FreeResult } from '@/components/mvp/FreeResult';
 
-export default function AnalysisSuccessPage() {
+function AnalysisSuccessContent() {
   const searchParams = useSearchParams();
   const analysisId = searchParams.get('analysis_id');
 
@@ -63,5 +63,13 @@ export default function AnalysisSuccessPage() {
       {result?.stage === 'paywall' ? <Paywall result={result} /> : null}
       {result?.stage === 'pro' ? <ProResult result={result} /> : null}
     </main>
+  );
+}
+
+export default function AnalysisSuccessPage() {
+  return (
+    <Suspense fallback={<main className="mx-auto w-full max-w-3xl px-4 py-8 text-sm">Завантаження...</main>}>
+      <AnalysisSuccessContent />
+    </Suspense>
   );
 }

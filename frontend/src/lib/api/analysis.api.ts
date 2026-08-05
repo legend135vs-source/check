@@ -3,6 +3,28 @@ import { getSessionId, setSessionId } from '@/lib/utils/session';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+async function parseError(response: Response): Promise<string> {
+  const fallback = `Request failed with status ${response.status}`;
+
+  try {
+    const data = await response.json();
+    if (typeof data?.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+    if (typeof data?.message === 'string' && data.message.trim()) {
+      return data.message;
+    }
+    return fallback;
+  } catch {
+    try {
+      const text = await response.text();
+      return text || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers || {});
   headers.set('Content-Type', 'application/json');
@@ -24,8 +46,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Request failed with status ${response.status}`);
+    throw new Error(await parseError(response));
   }
 
   return response.json() as Promise<T>;
@@ -34,7 +55,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function createAnalysis(autoriaUrl: string): Promise<AnalysisResponse> {
   return request<AnalysisResponse>('/api/v1/analysis', {
     method: 'POST',
-    body: JSON.stringify({ autoria_url: autoriaUrl }),
+    body: JSON.stringify({ url: autoriaUrl }),
   });
 }
 

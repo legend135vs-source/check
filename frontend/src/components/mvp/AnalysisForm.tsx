@@ -18,7 +18,7 @@ export function AnalysisForm({ loading, error, onSubmit }: AnalysisFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border p-6 shadow-sm">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border bg-white p-6 shadow-sm">
       <div className="space-y-2">
         <label htmlFor="autoria-url" className="text-sm font-medium">
           Посилання на AUTO.RIA
@@ -29,14 +29,14 @@ export function AnalysisForm({ loading, error, onSubmit }: AnalysisFormProps) {
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           placeholder="https://auto.ria.com/..."
-          className="w-full rounded-xl border px-4 py-3 outline-none"
+          className="w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-slate-900"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading || !url.trim()}
-        className="rounded-xl bg-black px-4 py-3 text-white disabled:opacity-50"
+        className="inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? 'Аналізуємо...' : 'Проаналізувати'}
       </button>

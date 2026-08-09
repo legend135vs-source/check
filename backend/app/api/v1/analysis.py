@@ -34,26 +34,46 @@ def _to_api_response(advertisement, report) -> AnalysisApiResponse:
     )
 
 
+def _error_detail(exc: Exception) -> str:
+    detail = getattr(exc, "detail", None) or str(exc)
+    return str(detail)
+
+
+def _validation_status(detail: str) -> int:
+    if "API_KEY" in detail.upper():
+        return status.HTTP_503_SERVICE_UNAVAILABLE
+    return status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
 @router.post("", response_model=AnalysisApiResponse)
 async def analyze_autoria_listing(payload: AnalysisRequest) -> AnalysisApiResponse:
     autoria_service = AutoRiaService()
-    advertisement = await autoria_service.get_advertisement_by_url(str(payload.url))
+    try:
+        advertisement = await autoria_service.get_advertisement_by_url(str(payload.url))
+    except ValidationError as exc:
+        # Invalid AUTO.RIA URL or missing AUTO_RIA_API_KEY
+        detail = _error_detail(exc)
+        raise HTTPException(status_code=_validation_status(detail), detail=detail) from exc
+    except ExternalAPIError as exc:
+        # AUTO.RIA API failure
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=_error_detail(exc),
+        ) from exc
 
     try:
         ai_service = AIReportGenerator()
         report = await ai_service.generate(advertisement)
     except ValidationError as exc:
         # OPENAI_API_KEY is not configured or similar validation issue
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc.detail or exc),
-        )
+        detail = _error_detail(exc)
+        raise HTTPException(status_code=_validation_status(detail), detail=detail) from exc
     except ExternalAPIError as exc:
         # Upstream AI provider failure
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(exc.detail or exc),
-        )
+            detail=_error_detail(exc),
+        ) from exc
 
     response = _to_api_response(advertisement, report)
     _ANALYSIS_STORE[response.analysis_id] = response

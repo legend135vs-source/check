@@ -17,7 +17,13 @@ export function AnalysisForm({ loading, error, onSubmit }: AnalysisFormProps) {
     await onSubmit(url.trim());
   };
 
-  const isAiUnavailable = error?.toLowerCase().includes('openai_api_key') || error?.toLowerCase().includes('openai');
+  const normalizedError = error?.toLowerCase() ?? '';
+  const isAiUnavailable = normalizedError.includes('openai_api_key') || normalizedError.includes('openai');
+  const isNetworkIssue =
+    normalizedError.includes('не вдалося підключитися') ||
+    normalizedError.includes('failed to fetch') ||
+    normalizedError.includes('cors') ||
+    normalizedError.includes('network');
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border bg-white p-6 shadow-sm">
@@ -31,14 +37,14 @@ export function AnalysisForm({ loading, error, onSubmit }: AnalysisFormProps) {
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           placeholder="https://auto.ria.com/..."
-          className="w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-slate-900"
+          className="w-full rounded-xl border px-4 py-3 outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading || !url.trim()}
-        className="inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-xl bg-black px-4 py-3 text-white disabled:opacity-50"
       >
         {loading ? 'Аналізуємо...' : 'Проаналізувати'}
       </button>
@@ -46,6 +52,12 @@ export function AnalysisForm({ loading, error, onSubmit }: AnalysisFormProps) {
       {error ? (
         <div className="space-y-1 text-sm">
           <p className="text-red-600">{error}</p>
+          {isNetworkIssue ? (
+            <p className="text-slate-600">
+              Схоже на проблему з&apos;єднання між сайтом і сервером аналізу. Якщо помилка повторюється — сервіс
+              тимчасово недоступний, спробуйте пізніше.
+            </p>
+          ) : null}
           {isAiUnavailable ? (
             <p className="text-slate-600">
               Зараз AI-аналіз недоступний (немає ключа або проблема з провайдером). Базові дані оголошення все одно можна

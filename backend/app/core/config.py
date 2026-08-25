@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     AUTO_RIA_API_KEY: str | None = None
     PAYMENT_SECRET: str | None = None
+    REDIS_URL: str | None = None
+    RATE_LIMIT_ANALYSIS_PER_HOUR: int = 20
+    AUTORIA_CACHE_TTL_SECONDS: int = 21600  # 6 годин
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

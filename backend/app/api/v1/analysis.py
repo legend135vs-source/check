@@ -1,13 +1,47 @@
-from fastapi import APIRouter, HTTPException, status
+import hashlib
 
+from fastapi import APIRouter, HTTPException, Request, status
+
+from app.core.config import settings
 from app.core.exceptions import ExternalAPIError, ValidationError
-from app.schemas.analysis import AnalysisApiResponse, AnalysisRequest
+from app.schemas.analysis import AdvertisementData, AnalysisApiResponse, AnalysisRequest
 from app.services.ai.report_generator import AIReportGenerator
+from app.services.analysis_store import analysis_store
 from app.services.autoria.service import AutoRiaService
+from app.services.cache import cache
+from app.services.rate_limiter import SlidingWindowRateLimiter
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
-_ANALYSIS_STORE: dict[str, AnalysisApiResponse] = {}
+_analysis_rate_limiter = SlidingWindowRateLimiter(
+    limit=settings.RATE_LIMIT_ANALYSIS_PER_HOUR,
+    window_seconds=3600,
+)
+
+
+def _client_key(request: Request) -> str:
+    session_id = request.headers.get("x-session-id")
+    if session_id:
+        return f"session:{session_id}"
+    client_host = request.client.host if request.client else "unknown"
+    return f"ip:{client_host}"
+
+
+def _cache_key(url: str) -> str:
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:24]
+    return f"autoria:ad:{digest}"
+
+
+async def _get_advertisement(url: str) -> AdvertisementData:
+    key = _cache_key(url)
+    cached = await cache.get(key)
+    if cached:
+        return AdvertisementData.model_validate_json(cached)
+
+    autoria_service = AutoRiaService()
+    advertisement = await autoria_service.get_advertisement_by_url(url)
+    await cache.set(key, advertisement.model_dump_json(), settings.AUTORIA_CACHE_TTL_SECONDS)
+    return advertisement
 
 
 def _to_api_response(advertisement, report) -> AnalysisApiResponse:
@@ -46,10 +80,17 @@ def _validation_status(detail: str) -> int:
 
 
 @router.post("", response_model=AnalysisApiResponse)
-async def analyze_autoria_listing(payload: AnalysisRequest) -> AnalysisApiResponse:
-    autoria_service = AutoRiaService()
+async def analyze_autoria_listing(payload: AnalysisRequest, request: Request) -> AnalysisApiResponse:
+    client_key = _client_key(request)
+    if not _analysis_rate_limiter.is_allowed(client_key):
+        retry_after = _analysis_rate_limiter.retry_after_seconds(client_key)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Забагато запитів на аналіз. Спробуйте ще раз приблизно через {max(1, retry_after // 60)} хв.",
+        )
+
     try:
-        advertisement = await autoria_service.get_advertisement_by_url(str(payload.url))
+        advertisement = await _get_advertisement(str(payload.url))
     except ValidationError as exc:
         # Invalid AUTO.RIA URL or missing AUTO_RIA_API_KEY
         detail = _error_detail(exc)
@@ -76,13 +117,13 @@ async def analyze_autoria_listing(payload: AnalysisRequest) -> AnalysisApiRespon
         ) from exc
 
     response = _to_api_response(advertisement, report)
-    _ANALYSIS_STORE[response.analysis_id] = response
+    await analysis_store.save(response)
     return response
 
 
 @router.get("/{analysis_id}", response_model=AnalysisApiResponse)
 async def get_analysis(analysis_id: str) -> AnalysisApiResponse:
-    analysis = _ANALYSIS_STORE.get(analysis_id)
+    analysis = await analysis_store.get(analysis_id)
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
